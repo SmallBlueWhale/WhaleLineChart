@@ -172,7 +172,6 @@ public class WhaleLineChart extends View {
             isRectFAnimFinished = true;
         } else {
             drawChartLine(canvas, (int) (rectHeightList.size() * (distance + rectWidth) - distance), lineAnimatorValue);
-            drawChartImg(canvas, (int) (rectHeightList.size() * (distance + rectWidth) - distance), lineAnimatorValue);
         }
         lineChartCanvas.restore();
     }
@@ -247,9 +246,11 @@ public class WhaleLineChart extends View {
     }
 
     //    }
+
+
     //曲线上升的动画
     private void initLineAnimation() {
-        lineValueAnimator = lineValueAnimator.ofFloat(0, 1).setDuration(1000);
+        lineValueAnimator = lineValueAnimator.ofFloat(0, 1).setDuration(2000);
         lineValueAnimator.setInterpolator(new AccelerateInterpolator());
         lineValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -314,15 +315,8 @@ public class WhaleLineChart extends View {
         lineChartCanvas.drawText(textValueList.get(stage), stage * rectWidth + (stage + 1) * distance + rectWidth / 2, -(textSize + 2 * textDistance + rectHeightList.get(stage)), textPaint);
     }
 
-    //小人移动
-    private void drawChartImg(Canvas canvas, int maxWidth, float lineAnimatorValue) {
-        float rate = (float) (Math.cbrt(lineAnimatorValue) * lineAnimatorValue);
-//        imgRect = new Rect(32, -121, 107, -11);
-//        imgPositionRectF = new Rect(32, -121, 107, -11);
-//        canvas.drawBitmap(canvasBitmap, imgRect, new RectF(), canvasPaint);
-    }
 
-
+    //画线以及画小人
     private void drawChartLine(Canvas canvas, int maxWidth, float lineAnimatorValue) {
 
         Log.e("maxWidth", "" + lineAnimatorValue * maxWidth);
@@ -330,12 +324,13 @@ public class WhaleLineChart extends View {
         float rate = (float) (Math.cbrt(lineAnimatorValue) * lineAnimatorValue);
         float lastRate = (float) (Math.cbrt(lastLineAnimatorValue) * lastLineAnimatorValue);
         lineChartCanvas.drawLine((float) lastLineAnimatorValue * maxWidth + distance, (float) (-2 * textSize - 2 * textDistance - 200 - lastRate * rectHeightList.get(rectHeightList.size() - 1)), (float) lineAnimatorValue * maxWidth + distance, (float) (-2 * textSize - 2 * textDistance - 200 - rate * rectHeightList.get(rectHeightList.size() - 1)), linePaint);
+        //小人移动
         lineChartCanvas.drawBitmap(small(imgBitmap), (float) lineAnimatorValue * maxWidth + distance, (float) (- imgBitmap.getHeight()/2 - 2 * textSize - 2 * textDistance - 200 - rate * rectHeightList.get(rectHeightList.size() - 1)), rectPaint);
         canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
         lastLineAnimatorValue = lineAnimatorValue;
     }
 
-    //操作bitmap的工具类
+    //操作bitmap缩放的方法
     private static Bitmap small(Bitmap bitmap) {
         Matrix matrix = new Matrix();
         matrix.postScale(0.35f, 0.35f); //长和宽放大缩小的比例
