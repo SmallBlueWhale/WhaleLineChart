@@ -20,6 +20,7 @@ import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.Animation;
@@ -27,6 +28,7 @@ import android.view.animation.AnimationSet;
 import android.view.animation.AnticipateOvershootInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
+import android.widget.ImageView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +36,7 @@ import java.util.List;
 /**
  * Created by jinhui on 2016/8/31.
  */
-public class WhaleLineChart extends View {
+public class WhaleLineChart extends ViewGroup {
     private Bitmap imgBitmap;                   //卖座小人图片
     private boolean isRectFAnimFinished = false;//矩形动画是否完成
     private float rectFAnimatorValue = 0;       //矩形动画过程中变化的值
@@ -75,6 +77,7 @@ public class WhaleLineChart extends View {
     private Bitmap saveCanvasBitmap;            //保存上一次bitmap状态的画布
     private DisplayMetrics dm = getResources().getDisplayMetrics();
 
+    private ImageView imageView;                //小人图片
     {
         textSize = 35f;
         rectWidth = 60f;
@@ -127,10 +130,18 @@ public class WhaleLineChart extends View {
 
     public WhaleLineChart(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        imageView = new ImageView(context);
+        addView(imageView);
+        setWillNotDraw(false);
         initPaint();
         initLineAnimation();
+        initImgAnimation();
 //        initRectFAnimation(stage);
 //        TypedArray typedArray = context.obtainStyledAttributes(attrs , R.styleable)
+    }
+
+    private void initImgAnimation() {
+        ObjectAnimator objectAnimator = ObjectAnimator.ofObject()
     }
 
     public WhaleLineChart(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
@@ -140,19 +151,20 @@ public class WhaleLineChart extends View {
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        super.onLayout(changed, left, top, right, bottom);
+
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        measureChildren(widthMeasureSpec,heightMeasureSpec);
         setMeasuredDimension(getLineChartWidth(widthMeasureSpec), getLineChartHeight(heightMeasureSpec));
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        pivotX = getWidth() / 2;
+        pivotX = getWidth()  / 2;
         pivotY = getHeight() / 2;
         canvasBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         lineChartCanvas = new Canvas(canvasBitmap);
@@ -163,7 +175,7 @@ public class WhaleLineChart extends View {
         super.onDraw(canvas);
         //将画布的中心移到屏幕的中心
         lineChartCanvas.save();
-        lineChartCanvas.translate(0, pivotY);
+        lineChartCanvas.translate(0, pivotY * 2);
         if (!isRectFAnimFinished) {
             for (int i = 0; i < rectHeightList.size(); i++, stage++) {
                 drawChartRect(canvas, rectWidth, rectHeightList.get(i), distance);
@@ -174,7 +186,7 @@ public class WhaleLineChart extends View {
             drawChartLine(canvas, (int) (rectHeightList.size() * (distance + rectWidth) - distance), lineAnimatorValue);
         }
         lineChartCanvas.restore();
-    }
+}
 
 
     private void initPaint() {
@@ -201,7 +213,7 @@ public class WhaleLineChart extends View {
         textPaint.setColor(Color.argb(100, 182, 181, 182));
         textPaint.setTextSize(textSize);
         textPaint.setAntiAlias(true);
-
+        linePath = new Path();
 
         imgBitmap = ((BitmapDrawable) getResources().getDrawable(R.mipmap.img, null)).getBitmap();
     }
@@ -285,7 +297,7 @@ public class WhaleLineChart extends View {
         if (specMode == MeasureSpec.EXACTLY) {
             height = specSize;
         } else {
-            height = dm.heightPixels;
+            height = dm.heightPixels / 2;
             if (specMode == MeasureSpec.AT_MOST) {
                 height = Math.min(height, specSize);
             }
@@ -319,13 +331,21 @@ public class WhaleLineChart extends View {
     //画线以及画小人
     private void drawChartLine(Canvas canvas, int maxWidth, float lineAnimatorValue) {
 
-        Log.e("maxWidth", "" + lineAnimatorValue * maxWidth);
-        Log.e("rectHeightList", "" + lineAnimatorValue * rectHeightList.get(rectHeightList.size() - 1));
         float rate = (float) (Math.cbrt(lineAnimatorValue) * lineAnimatorValue);
         float lastRate = (float) (Math.cbrt(lastLineAnimatorValue) * lastLineAnimatorValue);
-        lineChartCanvas.drawLine((float) lastLineAnimatorValue * maxWidth + distance, (float) (-2 * textSize - 2 * textDistance - 200 - lastRate * rectHeightList.get(rectHeightList.size() - 1)), (float) lineAnimatorValue * maxWidth + distance, (float) (-2 * textSize - 2 * textDistance - 200 - rate * rectHeightList.get(rectHeightList.size() - 1)), linePaint);
+        if (lineAnimatorValue == 0f) {
+            Log.e("distance", "" + distance);
+            Log.e("rectHeightList", "" + (float) (-2 * textSize - 2 * textDistance - 200 - rectHeightList.get(0)));
+//            linePath.moveTo((float) distance, (float) (-2 * textSize - 2 * textDistance - 200 - rectHeightList.get(0)));
+        } else if (lineAnimatorValue == 1) {
+//            linePath.quadTo((float) maxWidth + distance, (float) (-2 * textSize - 2 * textDistance - 200 - rectHeightList.get(rectHeightList.size() - 1) / 2), (float) maxWidth + distance, (float) (-2 * textSize - 2 * textDistance - 200 - rate * rectHeightList.get(rectHeightList.size() - 1)));
+//            lineChartCanvas.drawPath(linePath, linePaint);
+            Log.e("distance", "" + distance);
+            Log.e("rectHeightList", "" + (float) (-2 * textSize - 2 * textDistance - 200 - rectHeightList.get(0)));
+        }
         //小人移动
-        lineChartCanvas.drawBitmap(small(imgBitmap), (float) lineAnimatorValue * maxWidth + distance, (float) (- imgBitmap.getHeight()/2 - 2 * textSize - 2 * textDistance - 200 - rate * rectHeightList.get(rectHeightList.size() - 1)), rectPaint);
+        lineChartCanvas.drawLine((float) lastLineAnimatorValue * maxWidth + distance, (float) (-2 * textSize - 2 * textDistance - 200 - lastRate * rectHeightList.get(rectHeightList.size() - 1)), (float) lineAnimatorValue * maxWidth + distance, (float) (-2 * textSize - 2 * textDistance - 200 - rate * rectHeightList.get(rectHeightList.size() - 1)), linePaint);
+        lineChartCanvas.drawBitmap(small(imgBitmap), (float) lineAnimatorValue * maxWidth + distance, (float) (-imgBitmap.getHeight() / 2 - 2 * textSize - 2 * textDistance - 200 - rate * rectHeightList.get(rectHeightList.size() - 1)), rectPaint);
         canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
         lastLineAnimatorValue = lineAnimatorValue;
     }
