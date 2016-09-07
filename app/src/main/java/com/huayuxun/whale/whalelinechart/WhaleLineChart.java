@@ -18,6 +18,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
@@ -31,7 +32,7 @@ import java.util.List;
 /**
  * Created by jinhui on 2016/8/31.
  */
-public class WhaleLineChart extends ViewGroup {
+public class WhaleLineChart extends View {
     private float rectFAnimatorValue = 0;       //矩形动画过程中变化的值
     private ValueAnimator rectFValueAnimator;   //矩形动画
 //    private ValueAnimator ValueAnimator;      //折线动画
@@ -77,6 +78,8 @@ public class WhaleLineChart extends ViewGroup {
     private PathMeasure imgPathMeasure;
     private float[] mCurrentPosition = new float[2];
     private boolean isDrawBackGroundFinished = false;
+    private boolean isFinished = false;
+    private boolean isFirstDraw =true;
 //    private ImageView imageView;                //小人图片
 //    private ObjectAnimator imgAnimator;
 
@@ -134,7 +137,6 @@ public class WhaleLineChart extends ViewGroup {
 
     public WhaleLineChart(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        setWillNotDraw(false);
         initPaint();
     }
 
@@ -145,14 +147,8 @@ public class WhaleLineChart extends ViewGroup {
     }
 
     @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-
-    }
-
-    @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        measureChildren(widthMeasureSpec, heightMeasureSpec);
         setMeasuredDimension(getLineChartWidth(widthMeasureSpec), getLineChartHeight(heightMeasureSpec));
     }
 
@@ -176,18 +172,21 @@ public class WhaleLineChart extends ViewGroup {
                 drawChartText(lineChartCanvas, rectWidth, textList.get(i), widthDistance);
             }
             drawChartLine(lineChartCanvas, (int) (rectHeightList.size() * (widthDistance + rectWidth) - widthDistance));
-            isDrawBackGroundFinished = true;
-            startPathAnimation(2000);
-            startRectFAnimation(currentRect);
+//            startRectFAnimation(currentRect);
         }
         //保存上一次小人图的状态
-        saveCanvasBitmap = canvasBitmap;
-        if(mCurrentPosition[0] > 110) {
-            lineChartCanvas.drawBitmap(small(imgBitmap), mCurrentPosition[0] - 100, mCurrentPosition[1] - 60, linePaint);
+        if(!isFirstDraw) {
+            Log.e("Tag", "onDraw: " + mCurrentPosition[0] + " : " + mCurrentPosition[1]);
+            lineChartCanvas.drawBitmap(small(imgBitmap), mCurrentPosition[0], mCurrentPosition[1], linePaint);
+            Log.e("Tag", "onDraw: " );
+        }
+        isFirstDraw = false;
+        canvas.drawBitmap(canvasBitmap, 0, 0, null);
+        if(!isDrawBackGroundFinished) {
+            startPathAnimation(2000);
+            isDrawBackGroundFinished = true;
         }
         //返回到该状态
-        canvasBitmap = saveCanvasBitmap;
-        canvas.drawBitmap(canvasBitmap, 0, 0, null);
         lineChartCanvas.restore();
     }
 
@@ -324,6 +323,7 @@ public class WhaleLineChart extends ViewGroup {
         canvas.drawPath(linePath, linePaint);
     }
 
+
     public void startPathAnimation(int duration) {
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, imgPathMeasure.getLength());
         valueAnimator.setDuration(duration);
@@ -334,10 +334,17 @@ public class WhaleLineChart extends ViewGroup {
                 float value = (Float) animation.getAnimatedValue();
                 //获取当前点坐标封装到mCurrentPosition中
                 imgPathMeasure.getPosTan(value, mCurrentPosition, null);
-                Log.e("value:", "" + value);
-                Log.e("mCurrentPositionX:", "X:" + mCurrentPosition[0]);
-                Log.e("mCurrentPositionY:", "Y:" + mCurrentPosition[1]);
-                postInvalidate();
+
+                Log.e("Tag", "onAnimationUpdate: " + mCurrentPosition[0] + " : " + mCurrentPosition[1]);
+                if(!isFinished) {
+                    //Log.e("mCurrentPositionX:", "X:" + mCurrentPosition[0]);
+                    //Log.e("mCurrentPositionY:", "Y:" + mCurrentPosition[1]);
+                isFinished = true;
+                }
+                ((View)getParent()).invalidate();
+                forceLayout();
+                requestLayout();
+                Log.e("Tag", "onAnimationUpdate: ");
             }
         });
         valueAnimator.start();
