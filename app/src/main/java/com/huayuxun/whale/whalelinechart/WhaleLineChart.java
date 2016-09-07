@@ -47,6 +47,7 @@ public class WhaleLineChart extends ViewGroup {
     private float widthDistance;                //设置的横向间隔
     private float heightDistance;               //设置的纵向间隔
     private int stage = 0;                      //设置变化的阶段，总共有rectHeightList.size个阶段
+    private int currentRect = 0;                //当前矩形位置
 
     //距离文本的间隔
     private float textDistance = 20;
@@ -133,19 +134,10 @@ public class WhaleLineChart extends ViewGroup {
 
     public WhaleLineChart(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-//        imageView = new ImageView(context);
-//        addView(imageView);
-//        imageView.setImageResource(R.mipmap.img);
         setWillNotDraw(false);
         initPaint();
-//        initLineAnimation();
-        initImgAnimation();
-//        initRectFAnimation(stage);
     }
 
-    private void initImgAnimation() {
-//        ObjectAnimator objectAnimator = ObjectAnimator.ofObject()
-    }
 
     public WhaleLineChart(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
@@ -169,30 +161,34 @@ public class WhaleLineChart extends ViewGroup {
         super.onSizeChanged(w, h, oldw, oldh);
         pivotX = getWidth() / 2;
         pivotY = getHeight() / 2;
+        canvasBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        lineChartCanvas = new Canvas(canvasBitmap);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
         //将画布的中心移到屏幕的中心
-        canvas.translate(0, pivotY * 2);
+        lineChartCanvas.save();
+        lineChartCanvas.translate(0, pivotY * 2);
         if(!isDrawBackGroundFinished) {
-            canvasBitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
-            lineChartCanvas = new Canvas(canvasBitmap);
             for (int i = 0; i < rectHeightList.size(); i++, stage++) {
-                drawChartRect(canvas, rectWidth, rectHeightList.get(i), widthDistance);
-                drawChartText(canvas, rectWidth, textList.get(i), widthDistance);
+                drawChartRect(lineChartCanvas, rectWidth, rectHeightList.get(i), widthDistance);
+                drawChartText(lineChartCanvas, rectWidth, textList.get(i), widthDistance);
             }
-            drawChartLine(canvas, (int) (rectHeightList.size() * (widthDistance + rectWidth) - widthDistance));
+            drawChartLine(lineChartCanvas, (int) (rectHeightList.size() * (widthDistance + rectWidth) - widthDistance));
             isDrawBackGroundFinished = true;
             startPathAnimation(2000);
+            startRectFAnimation(currentRect);
         }
-        canvas.drawBitmap();
-        canvas.save();
-//        saveCanvasBitmap = canvasBitmap;
-        canvas.drawBitmap(small(imgBitmap), mCurrentPosition[0], mCurrentPosition[1], rectPaint);
-//        canvasBitmap = saveCanvasBitmap;
-        canvas.restore();
+        //保存上一次小人图的状态
+        saveCanvasBitmap = canvasBitmap;
+        if(mCurrentPosition[0] > 110) {
+            lineChartCanvas.drawBitmap(small(imgBitmap), mCurrentPosition[0] - 100, mCurrentPosition[1] - 60, linePaint);
+        }
+        //返回到该状态
+        canvasBitmap = saveCanvasBitmap;
+        canvas.drawBitmap(canvasBitmap, 0, 0, null);
+        lineChartCanvas.restore();
     }
 
 
@@ -224,11 +220,7 @@ public class WhaleLineChart extends ViewGroup {
         imgBitmap = ((BitmapDrawable) getResources().getDrawable(R.mipmap.img, null)).getBitmap();
     }
 
-    private void initRectFAnimation(int i) {
-//        if (rectFValueAnimator != null && rectFValueAnimator.isRunning()) {
-//            rectFValueAnimator.cancel();
-//            rectFValueAnimator.start();
-//        } else {
+    private void startRectFAnimation(int i) {
         rectFValueAnimator = rectFValueAnimator.ofFloat(0, rectHeightList.get(i)).setDuration(500);
         rectFValueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
         rectFValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -250,7 +242,7 @@ public class WhaleLineChart extends ViewGroup {
                 super.onAnimationEnd(animation);
                 rectFAnimatorValue = 0;
                 Log.i("ValueAnimator.isRunning", "" + rectFValueAnimator.isRunning());
-                initRectFAnimation(++stage);
+                startRectFAnimation(++currentRect);
             }
         });
         //开始动画
@@ -259,20 +251,6 @@ public class WhaleLineChart extends ViewGroup {
 
     //    }
 
-
-    //曲线上升的动画
-    private void initLineAnimation() {
-        lineValueAnimator = lineValueAnimator.ofFloat(0, 1).setDuration(2000);
-        lineValueAnimator.setInterpolator(new AccelerateInterpolator());
-        lineValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                lineAnimatorValue = (float) animation.getAnimatedValue();
-                invalidate();
-            }
-        });
-        lineValueAnimator.start();
-    }
 
     public int getLineChartWidth(int widthMeasureSpec) {
         int width = 0;
@@ -356,9 +334,9 @@ public class WhaleLineChart extends ViewGroup {
                 float value = (Float) animation.getAnimatedValue();
                 //获取当前点坐标封装到mCurrentPosition中
                 imgPathMeasure.getPosTan(value, mCurrentPosition, null);
-//                Log.e("value:", "" + value);
-//                Log.e("mCurrentPositionX:", "X:" + mCurrentPosition[0]);
-//                Log.e("mCurrentPositionY:", "Y:" + mCurrentPosition[1]);
+                Log.e("value:", "" + value);
+                Log.e("mCurrentPositionX:", "X:" + mCurrentPosition[0]);
+                Log.e("mCurrentPositionY:", "Y:" + mCurrentPosition[1]);
                 postInvalidate();
             }
         });
