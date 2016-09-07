@@ -140,8 +140,8 @@ public class PathAnimations extends Activity implements
   
         switch (checkedId) {  
             case R.id.named_components:  
-                // Use the named "x" and "y" properties for individual (x, y)  
-                // coordinates of the Path and set them on the view object.  
+                // Use the named "x" and "y" properties for individual (x, y)
+                // coordinates yof the Path and set them on the view object.
                 // The setX(float) and setY(float) methods are called on view.  
                 // An int version of this method also exists for animating  
                 // int Properties.  
