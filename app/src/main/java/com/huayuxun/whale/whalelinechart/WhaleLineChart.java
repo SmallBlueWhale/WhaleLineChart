@@ -141,7 +141,7 @@ public class WhaleLineChart extends ViewGroup {
     }
 
     private void initImgAnimation() {
-        ObjectAnimator objectAnimator = ObjectAnimator.ofObject()
+//        ObjectAnimator objectAnimator = ObjectAnimator.ofObject()
     }
 
     public WhaleLineChart(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
