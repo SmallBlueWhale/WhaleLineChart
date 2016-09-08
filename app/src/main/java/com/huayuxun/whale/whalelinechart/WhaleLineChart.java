@@ -15,6 +15,8 @@ import android.graphics.PathMeasure;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -28,6 +30,8 @@ import android.widget.ImageView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created by jinhui on 2016/8/31.
@@ -41,7 +45,7 @@ public class WhaleLineChart extends View {
     private float lastLineAnimatorValue = 0;    //上一次折线动画过程中变化的值
     private float lineAnimatorValue = 0;    //折线动画过程中变化的值
     private ValueAnimator lineValueAnimator;    //折线动画
-
+    public Timer mTimer = new Timer();// 定时器
     private RectF rectF;                        //矩形
     private float rectWidth;                    //矩形宽度
     private List<Float> rectHeightList;         //每一列矩形高度
@@ -55,7 +59,7 @@ public class WhaleLineChart extends View {
     private float textSize;                     //文本的字体大小
     private List<String> textList;              //每一列文本的内容
     private List<String> textValueList;         //每一列文本数值的内容
-
+    private int count = 1;
 
     private float pivotX;                       //屏幕的中心X
     private float pivotY;                       //屏幕的中心Y
@@ -183,7 +187,7 @@ public class WhaleLineChart extends View {
         isFirstDraw = false;
         canvas.drawBitmap(canvasBitmap, 0, 0, null);
         if(!isDrawBackGroundFinished) {
-            startPathAnimation(2000);
+            timerTask();
             isDrawBackGroundFinished = true;
         }
         //返回到该状态
@@ -266,6 +270,21 @@ public class WhaleLineChart extends View {
         return width;
     }
 
+    public void timerTask() {
+        //创建定时线程执行更新任务
+        mTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if(count <= imgPathMeasure.getLength()){
+                    mHandler.sendEmptyMessage(1);// 向Handler发送消息
+                }else{
+                    mHandler.sendEmptyMessage(2);// 向Handler发送消息停止继续执行
+                }
+                count = count + 1;
+                imgPathMeasure.getPosTan(count, mCurrentPosition, null);
+            }
+        }, 3000, 3000);// 定时任务
+    }
     public int getLineChartHeight(int heightMeasureSpec) {
         int height = 0;
         int specSize = MeasureSpec.getSize(heightMeasureSpec);
@@ -324,6 +343,20 @@ public class WhaleLineChart extends View {
     }
 
 
+    public Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case 1:
+                    invalidate();
+                    break;
+                case 2:
+                    mTimer.cancel();//
+                    mTimer=null;
+            }
+            super.handleMessage(msg);
+        }
+    };
     public void startPathAnimation(int duration) {
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, imgPathMeasure.getLength());
         valueAnimator.setDuration(duration);
