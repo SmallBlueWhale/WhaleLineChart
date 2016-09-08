@@ -15,8 +15,6 @@ import android.graphics.PathMeasure;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.Handler;
-import android.os.Message;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -30,8 +28,6 @@ import android.widget.ImageView;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Created by jinhui on 2016/8/31.
@@ -39,13 +35,12 @@ import java.util.TimerTask;
 public class WhaleLineChart extends View {
     private float rectFAnimatorValue = 0;       //矩形动画过程中变化的值
     private ValueAnimator rectFValueAnimator;   //矩形动画
-//    private ValueAnimator ValueAnimator;      //折线动画
 
     private Path linePath;                      //曲线的路径
     private float lastLineAnimatorValue = 0;    //上一次折线动画过程中变化的值
     private float lineAnimatorValue = 0;    //折线动画过程中变化的值
     private ValueAnimator lineValueAnimator;    //折线动画
-    public Timer mTimer = new Timer();// 定时器
+
     private RectF rectF;                        //矩形
     private float rectWidth;                    //矩形宽度
     private List<Float> rectHeightList;         //每一列矩形高度
@@ -59,22 +54,21 @@ public class WhaleLineChart extends View {
     private float textSize;                     //文本的字体大小
     private List<String> textList;              //每一列文本的内容
     private List<String> textValueList;         //每一列文本数值的内容
-    private int count = 1;
+
 
     private float pivotX;                       //屏幕的中心X
     private float pivotY;                       //屏幕的中心Y
     private Paint rectPaint;                    //用于绘制矩形的画笔
     private Paint linePaint;                    //用于绘制折线的画笔
     private Paint textPaint;                    //用于绘制文字的画笔
-    private Paint canvasPaint;                  //全局绘制的画笔
+//    private Paint canvasPaint;                  //全局绘制的画笔
 
     private Rect imgRect;                     //图片的大小
     private Rect imgPositionRectF;             //图片在屏幕的位置
 
 
-    private Canvas lineChartCanvas;             //绑定bitmap的画布
-    private Bitmap canvasBitmap;                //用一个bitmap保存画布
-    private Bitmap saveCanvasBitmap;            //保存上一次bitmap状态的画布
+    //    private Canvas lineChartCanvas;             //绑定bitmap的画布
+//    private Bitmap canvasBitmap;                //用一个bitmap保存画布
     private DisplayMetrics dm = getResources().getDisplayMetrics();
 
 
@@ -83,7 +77,7 @@ public class WhaleLineChart extends View {
     private float[] mCurrentPosition = new float[2];
     private boolean isDrawBackGroundFinished = false;
     private boolean isFinished = false;
-    private boolean isFirstDraw =true;
+    private boolean isFirstDraw = true;
 //    private ImageView imageView;                //小人图片
 //    private ObjectAnimator imgAnimator;
 
@@ -161,37 +155,33 @@ public class WhaleLineChart extends View {
         super.onSizeChanged(w, h, oldw, oldh);
         pivotX = getWidth() / 2;
         pivotY = getHeight() / 2;
-        canvasBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        lineChartCanvas = new Canvas(canvasBitmap);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         //将画布的中心移到屏幕的中心
-        lineChartCanvas.save();
-        lineChartCanvas.translate(0, pivotY * 2);
-        if(!isDrawBackGroundFinished) {
-            for (int i = 0; i < rectHeightList.size(); i++, stage++) {
-                drawChartRect(lineChartCanvas, rectWidth, rectHeightList.get(i), widthDistance);
-                drawChartText(lineChartCanvas, rectWidth, textList.get(i), widthDistance);
-            }
-            drawChartLine(lineChartCanvas, (int) (rectHeightList.size() * (widthDistance + rectWidth) - widthDistance));
-//            startRectFAnimation(currentRect);
+        canvas.save();
+        canvas.translate(0, pivotY * 2);
+        for (int i = 0; i < rectHeightList.size(); i++, stage++) {
+            drawChartRect(canvas, rectWidth, rectHeightList.get(i), widthDistance);
+            drawChartText(canvas, rectWidth, textList.get(i), widthDistance);
         }
+        stage = 0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ;
+        drawChartLine(canvas, (int) (rectHeightList.size() * (widthDistance + rectWidth) - widthDistance));
+//            startRectFAnimation(currentRect);
         //保存上一次小人图的状态
-        if(!isFirstDraw) {
+        if (!isFirstDraw) {
             Log.e("Tag", "onDraw: " + mCurrentPosition[0] + " : " + mCurrentPosition[1]);
-            lineChartCanvas.drawBitmap(small(imgBitmap), mCurrentPosition[0], mCurrentPosition[1], linePaint);
-            Log.e("Tag", "onDraw: " );
+            canvas.drawBitmap(small(imgBitmap), mCurrentPosition[0], mCurrentPosition[1], linePaint);
+            Log.e("Tag", "onDraw: ");
         }
         isFirstDraw = false;
-        canvas.drawBitmap(canvasBitmap, 0, 0, null);
-        if(!isDrawBackGroundFinished) {
-            timerTask();
+        if (!isDrawBackGroundFinished) {
+            startPathAnimation(2000);
             isDrawBackGroundFinished = true;
         }
         //返回到该状态
-        lineChartCanvas.restore();
+        canvas.restore();
     }
 
 
@@ -270,21 +260,6 @@ public class WhaleLineChart extends View {
         return width;
     }
 
-    public void timerTask() {
-        //创建定时线程执行更新任务
-        mTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                if(count <= imgPathMeasure.getLength()){
-                    mHandler.sendEmptyMessage(1);// 向Handler发送消息
-                }else{
-                    mHandler.sendEmptyMessage(2);// 向Handler发送消息停止继续执行
-                }
-                count = count + 1;
-                imgPathMeasure.getPosTan(count, mCurrentPosition, null);
-            }
-        }, 3000, 3000);// 定时任务
-    }
     public int getLineChartHeight(int heightMeasureSpec) {
         int height = 0;
         int specSize = MeasureSpec.getSize(heightMeasureSpec);
@@ -337,26 +312,12 @@ public class WhaleLineChart extends View {
         linePath = new Path();
         linePath.moveTo(firstPointX, firstPointY);
         linePath.quadTo(controlPointX, controlPointY, lastPointX, lastPointY);
-        imgPathMeasure = new PathMeasure(linePath,false);
+        imgPathMeasure = new PathMeasure(linePath, false);
 
         canvas.drawPath(linePath, linePaint);
     }
 
 
-    public Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case 1:
-                    invalidate();
-                    break;
-                case 2:
-                    mTimer.cancel();//
-                    mTimer=null;
-            }
-            super.handleMessage(msg);
-        }
-    };
     public void startPathAnimation(int duration) {
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, imgPathMeasure.getLength());
         valueAnimator.setDuration(duration);
@@ -369,12 +330,12 @@ public class WhaleLineChart extends View {
                 imgPathMeasure.getPosTan(value, mCurrentPosition, null);
 
                 Log.e("Tag", "onAnimationUpdate: " + mCurrentPosition[0] + " : " + mCurrentPosition[1]);
-                if(!isFinished) {
+                if (!isFinished) {
                     //Log.e("mCurrentPositionX:", "X:" + mCurrentPosition[0]);
                     //Log.e("mCurrentPositionY:", "Y:" + mCurrentPosition[1]);
-                isFinished = true;
+                    isFinished = true;
                 }
-                ((View)getParent()).invalidate();
+                ((View) getParent()).invalidate();
                 forceLayout();
                 requestLayout();
                 Log.e("Tag", "onAnimationUpdate: ");
