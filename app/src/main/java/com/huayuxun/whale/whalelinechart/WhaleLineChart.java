@@ -2,6 +2,7 @@ package com.huayuxun.whale.whalelinechart;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -28,6 +29,8 @@ import java.util.List;
  * Created by jinhui on 2016/8/31.
  */
 public class WhaleLineChart extends View {
+    private int currentDrawCount = 0;
+    private float currentDrawValue = 0;
     private int totalPosition = 0;             //总的分数
     private int targetPosition = 0;            //指定的分数，用来确定小人运动到哪一点，矩形运动到哪一个位置停止
     private int drawRectCount = 0;             //根据指定分数计算出需要绘制的矩形个数
@@ -75,6 +78,8 @@ public class WhaleLineChart extends View {
     private PathMeasure imgPathMeasure;
     private float[] mCurrentPosition = new float[2];
     private float[] mTanPositon = new float[2];
+    private ValueAnimator rectAnimator;
+    private ValueAnimator imgAnimator;
 
     {
         textSize = 35f;
@@ -241,7 +246,7 @@ public class WhaleLineChart extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         if (canvasBitmap != null) {
-            canvasBitmap .recycle();
+            canvasBitmap.recycle();
         }
         pivotX = getWidth() / 2;
         pivotY = getHeight() / 2;
@@ -263,18 +268,21 @@ public class WhaleLineChart extends View {
 
     //绘制背景，矩形，文字，以及曲线
     private void drawBackGround(Canvas canvas) {
-        drawChartRect(lineChartCanvas);
-        drawChartText(lineChartCanvas);
-        drawChartLine(lineChartCanvas);
+//        drawChartRect(canvas);
+        drawChartText(canvas);
+        drawChartLine(canvas);
     }
 
     //开始矩形以及动画
     private void drawAnimation(Canvas canvas) {
         //保存上一次小人图的状态
-        Log.e("Tag", "onDraw: " + mCurrentPosition[0] + " : " + mCurrentPosition[1]);
         if (isStartAnimation) {
 //            drawChartRect(canvas, rectHeightList.get(i));
+            rectF = new RectF(currentDrawCount * rectWidth + (currentDrawCount + 1) * widthDistance, -currentDrawValue - textSize - textDistance, currentDrawCount * rectWidth + (currentDrawCount + 1) * widthDistance + rectWidth, -textSize - textDistance);
+            Log.e("", "" + currentDrawCount * rectWidth + (currentDrawCount + 1) * widthDistance + "---------" + (-currentDrawValue - textSize - textDistance));
+            canvas.drawRoundRect(rectF, 50, 50, veilRectPaint);
             canvas.drawBitmap(small(imgBitmap), mCurrentPosition[0] - rectWidth, mCurrentPosition[1] - small(imgBitmap).getHeight(), linePaint);
+
         }
     }
 
@@ -316,78 +324,58 @@ public class WhaleLineChart extends View {
 
     //动态绘制小人的属性动画
     public void startAnimation(int duration) {
-        final ValueAnimator imgAnimator = ValueAnimator.ofFloat(0, imgPathMeasure.getLength());
+        imgAnimator = ValueAnimator.ofFloat(0, imgPathMeasure.getLength());
         imgAnimator.setDuration(duration);
         imgAnimator.setInterpolator(new LinearInterpolator());
         imgAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (Float) animation.getAnimatedValue();
+                Log.e("value:", "" + value);
                 //获取当前点坐标封装到mCurrentPosition中
                 float rate = (float) totalPosition / textValueList.get(textValueList.size() - 1);
-                Log.e("rate:", "" + rate);
+                //当还没有达到指定的位置时，让控件继续重绘。否则取消动画
                 if (value < rate * imgPathMeasure.getLength()) {
                     imgPathMeasure.getPosTan(value, mCurrentPosition, mTanPositon);
-                    Log.e("mTanPositon0:", "" + mTanPositon[0]);
-                    Log.e("mTanPositon1:", "" + mTanPositon[1]);
-                    if (value == 0) {
-                        postInvalidateDelayed(1000);
-                    } else {
-                        invalidate();
-                    }
+                    invalidate();
                 } else {
                     imgAnimator.cancel();
                 }
             }
         });
-        ValueAnimator rectAnimator = ValueAnimator.ofFloat(0, totalPosition);
+        //绘制动态矩形
+        rectAnimator = ValueAnimator.ofFloat(0, totalPosition);
+        rectAnimator.setDuration(duration);
         rectAnimator.setInterpolator(new LinearInterpolator());
         rectAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                rectFAnimatorValue = (float) animation.getAnimatedValue();
-                invalidate();
+                float rate = (float) totalPosition / textValueList.get(textValueList.size() - 1);
+                rectFAnimatorValue = (Float) animation.getAnimatedValue();
+                Log.e("rectFAnimatorValue:", "" + rectFAnimatorValue);
+//                //当前位置以及当前的差值
+//                int currentCount = 0;
+//                float currentDistance = rectFAnimatorValue - textValueList.get(currentCount);
+//                //算出绘制矩形时，当前的位置
+//                if(rectFAnimatorValue < totalPosition) {
+//                    while (currentDistance > 0) {
+//                        currentDistance = rectFAnimatorValue - textValueList.get(currentCount);
+//                        currentCount++;
+//                    }
+//                    Log.e("currentDistance:",""+currentDistance);
+//                    Log.e("currentCount:",""+currentCount);
+//                    currentDrawValue = currentDistance;
+//                    currentDrawCount = currentCount;
+//                    invalidate();
+//                }else{
+//                    rectAnimator.cancel();
+//                }
             }
         });
         imgAnimator.start();
+        rectAnimator.start();
     }
 
-
-    private void startRectFAnimation(int i) {
-        rectFValueAnimator = rectFValueAnimator.ofFloat(0, rectHeightList.get(i)).setDuration(500);
-        rectFValueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
-        rectFValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                rectFAnimatorValue = (int) animation.getAnimatedValue();
-//                    if (rectFAnimatorValue<){
-//
-//                    }else if(){
-//
-//                    }else if(){
-//
-//                    }
-                invalidate();
-            }
-        });
-
-        rectFValueAnimator.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationCancel(Animator animation) {
-                super.onAnimationCancel(animation);
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                super.onAnimationEnd(animation);
-                rectFAnimatorValue = 0;
-                Log.i("ValueAnimator.isRunning", "" + rectFValueAnimator.isRunning());
-                startRectFAnimation(++currentRect);
-            }
-        });
-        //开始动画
-        rectFValueAnimator.start();
-    }
 
     //操作bitmap缩放的方法
     private static Bitmap small(Bitmap bitmap) {
@@ -405,7 +393,6 @@ public class WhaleLineChart extends View {
             targetPosition = score - textValueList.get(i);
             if (score < textValueList.get(i)) {
                 drawRectCount = i;
-                Log.e("targetPosition:", "" + targetPosition);
                 break;
             }
         }
