@@ -142,10 +142,10 @@ public class WhaleLineChart extends View {
     private void initPath() {
         //起点
         float firstPointX = widthDistance;
-        float firstPointY = -(heightDistance +   2 * textDistance + rectHeightList.get(0));
+        float firstPointY = -(heightDistance + 2 * textDistance + rectHeightList.get(0));
         //终点
         float lastPointX = (rectHeightList.size() * (widthDistance + rectWidth) - widthDistance) + widthDistance;
-        float lastPointY = -(heightDistance +  textSize + 2 * textDistance + rectHeightList.get(rectHeightList.size() - 1));
+        float lastPointY = -(heightDistance + textSize + 2 * textDistance + rectHeightList.get(rectHeightList.size() - 1));
         //控制点
         float controlPointX = 3 * widthDistance + rectWidth * 3;
         float controlPointY = -(heightDistance + 2 * textSize + 2 * textDistance + rectHeightList.get(1));
@@ -352,40 +352,36 @@ public class WhaleLineChart extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 rectFAnimatorValue = (Float) animation.getAnimatedValue();
-                float rate = (float) (totalPosition  / textValueList.get(textValueList.size() - 1));
                 //误差参数设置为500
                 if (rectFAnimatorValue < 500) {
                     return;
                 }
                 //当前位置以及当前的差值
                 int currentCount = 1;
-                float currentDistance = rectFAnimatorValue - 500 - textValueList.get(currentCount);
+                float currentDistance = rectFAnimatorValue - 500;
                 float nextDistance = rectFAnimatorValue - 500 - textValueList.get(currentCount + 1);
                 //算出绘制矩形时，当前的位置
                 if (rectFAnimatorValue < totalPosition + 500) {
                     currentDrawCount = currentCount;
-                    currentDrawValue = rectHeightList.get(currentDrawCount) * (currentDistance / textValueList.get(currentDrawCount));
-                    Log.e("rectFAnimatorValue:", "" + rectFAnimatorValue);
-                    while (nextDistance > 0 && rectFAnimatorValue  < textValueList.get(textValueList.size() - 1) + 500) {
+                    currentDrawValue = rectHeightList.get(currentDrawCount) * ((rectFAnimatorValue - 500) / textValueList.get(currentDrawCount));
+                    while (rectFAnimatorValue > 1000 && currentDistance > 0 && rectFAnimatorValue < textValueList.get(textValueList.size() - 1) + 500) {
+
                         //当这个数值处于两个变量值之间的时候，可以直接算出数值，跳出
-                        // 防止越界
-                        // 当走到这个位置时，nextDistance一定大于0
-                        if (currentCount == textValueList.size() - 2) {
+                        if (nextDistance < 0) {
                             currentDrawCount = currentCount + 1;
                             //用当前的比分率与当前长度相乘
-                            currentDrawValue = rectHeightList.get(currentDrawCount) *(currentDistance / textValueList.get(currentDrawCount));
-
+                            currentDrawValue = rectHeightList.get(currentDrawCount) * ((rectFAnimatorValue - 500) / textValueList.get(currentDrawCount));
+                            Log.e("rate：", "" + currentDistance / textValueList.get(currentDrawCount));
                             break;
                         }
                         currentCount++;
-                        currentDistance = rectFAnimatorValue - textValueList.get(currentCount) ;
-                        nextDistance = rectFAnimatorValue - textValueList.get(currentCount + 1);
-                        currentDrawCount = currentCount + 1;
-                        //用当前的比分率与当前长度相乘
-                        currentDrawValue = rectHeightList.get(currentDrawCount) *(currentDistance / textValueList.get(currentDrawCount));
+                        currentDistance = rectFAnimatorValue - 500 - textValueList.get(currentCount);
+                        nextDistance = rectFAnimatorValue - 500 - textValueList.get(currentCount + 1);
                     }
-//                    Log.e("rate：", "" + currentDistance / textValueList.get(currentDrawCount));
-//                    Log.e("currentDrawCount:", "" + currentDrawCount);
+                    Log.e("rectFAnimatorValue:", "" + rectFAnimatorValue);
+                    Log.e("currentDrawCount:", "" + currentDrawCount);
+                    Log.e("currentDrawValue:", "" + currentDrawValue);
+                    Log.e("------------------:", "--------------");
                     invalidate();
                 } else {
                     rectAnimator.cancel();
