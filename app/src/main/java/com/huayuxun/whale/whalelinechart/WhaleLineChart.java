@@ -39,12 +39,10 @@ public class WhaleLineChart extends View {
     private boolean isStartAnimation = false;
 
     private float rectFAnimatorValue = 0;       //矩形动画过程中变化的值
-    private ValueAnimator rectFValueAnimator;   //矩形动画
+    private ValueAnimator rectAnimator;         //矩形动画
+    private ValueAnimator imgAnimator;          //图片动画
 
     private Path linePath;                      //曲线的路径
-    private float lastLineAnimatorValue = 0;    //上一次折线动画过程中变化的值
-    private float lineAnimatorValue = 0;        //折线动画过程中变化的值
-    private ValueAnimator lineValueAnimator;    //折线动画
 
     private RectF rectF;                        //矩形
     private float rectWidth;                    //矩形宽度
@@ -80,8 +78,6 @@ public class WhaleLineChart extends View {
     private PathMeasure imgPathMeasure;
     private float[] mCurrentPosition = new float[2];
     private float[] mTanPositon = new float[2];
-    private ValueAnimator rectAnimator;
-    private ValueAnimator imgAnimator;
 
     {
         rectHeightList = new ArrayList<Float>() {
@@ -91,6 +87,7 @@ public class WhaleLineChart extends View {
                 add(150f);
                 add(200f);
                 add(320f);
+                add(420f);
             }
         };
         textList = new ArrayList<String>() {
@@ -100,6 +97,7 @@ public class WhaleLineChart extends View {
                 add("金牌替身");
                 add("荧幕新秀");
                 add("最佳主角");
+                add("最佳主角");
             }
         };
 
@@ -108,23 +106,37 @@ public class WhaleLineChart extends View {
                 add(0);
                 add(500);
                 add(2000);
-                add(6000);
+                add(7000);
+                add(10000);
                 add(15000);
             }
         };
         textSize = 35f;
         rectWidth = 50f;
-        widthDistance = (dm.widthPixels - textValueList.size() * 50) / 6;
+        widthDistance = (dm.widthPixels - textValueList.size() * 50) / (textValueList.size()+1);
         heightDistance = 100f;
     }
 
-    public ValueAnimator getRectFValueAnimator() {
-        return rectFValueAnimator;
+    public void resumeValueAnimator() {
+        if(rectAnimator!=null)
+        rectAnimator.resume();
+        if(imgAnimator!=null)
+        imgAnimator.resume();
     }
 
-    public ValueAnimator getLineValueAnimator() {
-        return lineValueAnimator;
+    public void pauseValueAnimator() {
+        if(rectAnimator!=null)
+            rectAnimator.pause();
+        if(imgAnimator!=null)
+            imgAnimator.pause();
     }
+    public void stopValueAnimator() {
+        if(rectAnimator!=null)
+            rectAnimator.end();
+        if(imgAnimator!=null)
+            imgAnimator.end();
+    }
+
 
     public WhaleLineChart(Context context) {
         this(context, null);
@@ -374,7 +386,7 @@ public class WhaleLineChart extends View {
                 //当还没有达到指定的位置时，让控件继续重绘。否则取消动画
                 imgPathMeasure.getPosTan(value - 50, mCurrentPosition, mTanPositon);
                 if (mCurrentPosition[0] < widthDistance + rectWidth + getExactlyValueX()) {
-                    postInvalidate();
+                    invalidate();
                 } else {
                     imgAnimator.cancel();
                 }
@@ -443,6 +455,6 @@ public class WhaleLineChart extends View {
                 break;
             }
         }
-        startAnimation(6000);
+        startAnimation(4000);
     }
 }

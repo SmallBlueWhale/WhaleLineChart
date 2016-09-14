@@ -6,9 +6,34 @@
     android:layout_height="match_parent"
     tools:context="com.huayuxun.whale.whalelinechart.MainActivity">
 
+    <TextView
+        android:id="@+id/text1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="17sp"
+        android:text="@string/text" />
+    <TextView
+        android:id="@+id/text2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#b5b6b5"
+        android:textSize="15sp"
+        android:text="@string/text1"
+        android:layout_below="@+id/text1" />
+
+    <ImageView
+        android:id="@+id/img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@mipmap/ic_launcher"
+        android:layout_below="@+id/whaleLineChart"
+        android:layout_centerHorizontal="true"
+        />
 
     <com.huayuxun.whale.whalelinechart.WhaleLineChart
         android:id="@+id/whaleLineChart"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/text2"
+        android:layout_alignParentStart="true" />
 </RelativeLayout>
