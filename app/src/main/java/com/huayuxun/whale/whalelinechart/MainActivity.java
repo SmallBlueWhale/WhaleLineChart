@@ -11,7 +11,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         whaleLineChart = (WhaleLineChart) findViewById(R.id.whaleLineChart);
-        whaleLineChart.setScore(15000);
+        whaleLineChart.setScore(6000);
     }
 
     @Override

@@ -20,6 +20,8 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 
 import java.util.ArrayList;
@@ -82,10 +84,6 @@ public class WhaleLineChart extends View {
     private ValueAnimator imgAnimator;
 
     {
-        textSize = 35f;
-        rectWidth = 50f;
-        widthDistance = 130f;
-        heightDistance = 100f;
         rectHeightList = new ArrayList<Float>() {
             {
                 add(50f);
@@ -114,6 +112,10 @@ public class WhaleLineChart extends View {
                 add(15000);
             }
         };
+        textSize = 35f;
+        rectWidth = 50f;
+        widthDistance = (dm.widthPixels - textValueList.size() * 50) / 6;
+        heightDistance = 100f;
     }
 
     public ValueAnimator getRectFValueAnimator() {
@@ -310,6 +312,9 @@ public class WhaleLineChart extends View {
         for (int i = 0; i < rectHeightList.size(); i++) {
 
             canvas.drawText(textList.get(i), i * rectWidth + (i + 1) * widthDistance + rectWidth / 2, 0, textPaint);
+            if (i == 0) {
+                canvas.drawText(textValueList.get(i) + "", i * rectWidth + (i + 1) * widthDistance + rectWidth / 2, -(textSize + 2 * textDistance + rectHeightList.get(i)), textPaint);
+            }
             canvas.drawText(textValueList.get(i) + "麦点", i * rectWidth + (i + 1) * widthDistance + rectWidth / 2, -(textSize + 2 * textDistance + rectHeightList.get(i)), textPaint);
 
         }
@@ -347,7 +352,7 @@ public class WhaleLineChart extends View {
         //绘制动态矩形
         rectAnimator = ValueAnimator.ofFloat(0, totalPosition + 500);
         rectAnimator.setDuration(duration);
-        rectAnimator.setInterpolator(new LinearInterpolator());
+        rectAnimator.setInterpolator(new AccelerateInterpolator());
         rectAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -363,15 +368,15 @@ public class WhaleLineChart extends View {
                 //算出绘制矩形时，当前的位置
                 if (rectFAnimatorValue < totalPosition + 500) {
                     currentDrawCount = currentCount;
-                    currentDrawValue = rectHeightList.get(currentDrawCount) * ((rectFAnimatorValue - 500) / textValueList.get(currentDrawCount));
+                    currentDrawValue = rectHeightList.get(currentDrawCount) * ((rectFAnimatorValue - 500) / (textValueList.get(currentCount)));
                     while (rectFAnimatorValue > 1000 && currentDistance > 0 && rectFAnimatorValue < textValueList.get(textValueList.size() - 1) + 500) {
 
                         //当这个数值处于两个变量值之间的时候，可以直接算出数值，跳出
                         if (nextDistance < 0) {
                             currentDrawCount = currentCount + 1;
                             //用当前的比分率与当前长度相乘
-                            currentDrawValue = rectHeightList.get(currentDrawCount) * ((rectFAnimatorValue - 500) / textValueList.get(currentDrawCount));
-                            Log.e("rate：", "" + currentDistance / textValueList.get(currentDrawCount));
+                            currentDrawValue = rectHeightList.get(currentDrawCount) * (1 - (-(nextDistance) / (currentDistance - nextDistance)));
+                            Log.e("currentDrawValue：", "" + currentDrawValue);
                             break;
                         }
                         currentCount++;
