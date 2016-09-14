@@ -87,10 +87,10 @@ public class WhaleLineChart extends View {
         rectHeightList = new ArrayList<Float>() {
             {
                 add(50f);
-                add(120f);
+                add(100f);
+                add(150f);
                 add(200f);
-                add(280f);
-                add(400f);
+                add(320f);
             }
         };
         textList = new ArrayList<String>() {
@@ -168,20 +168,18 @@ public class WhaleLineChart extends View {
     private void initPaint() {
         //初始化矩形画笔
         rectPaint = new Paint();
-        rectPaint.setColor(Color.YELLOW);
+        rectPaint.setColor(Color.argb(100, 232, 191, 11));
         rectPaint.setStrokeCap(Paint.Cap.ROUND);
         rectPaint.setStrokeWidth(3);
         rectPaint.setAntiAlias(true);
-        rectPaint.setAlpha(100);
         rectPaint.setStyle(Paint.Style.FILL);
 
         //初始化遮幕层矩形画笔
         veilRectPaint = new Paint();
-        veilRectPaint.setColor(Color.BLUE);
+        veilRectPaint.setColor(Color.WHITE);
         veilRectPaint.setStrokeCap(Paint.Cap.ROUND);
         veilRectPaint.setStrokeWidth(3);
         veilRectPaint.setAntiAlias(true);
-        veilRectPaint.setAlpha(50);
         veilRectPaint.setStyle(Paint.Style.FILL);
 
         //初始化折线画笔
@@ -280,9 +278,8 @@ public class WhaleLineChart extends View {
         //保存上一次小人图的状态
         if (isStartAnimation) {
             rectF = new RectF(currentDrawCount * rectWidth + (currentDrawCount + 1) * widthDistance, -currentDrawValue - textSize - textDistance, currentDrawCount * rectWidth + (currentDrawCount + 1) * widthDistance + rectWidth, -textSize - textDistance);
-//            Log.e("", "" + currentDrawCount * rectWidth + (currentDrawCount + 1) * widthDistance + "---------" + (-currentDrawValue - textSize - textDistance));
             canvas.drawRoundRect(rectF, 50, 50, veilRectPaint);
-            canvas.drawBitmap(small(imgBitmap), mCurrentPosition[0] - rectWidth, mCurrentPosition[1] - small(imgBitmap).getHeight(), linePaint);
+            canvas.drawBitmap(small(imgBitmap), mCurrentPosition[0] - rectWidth - 20, mCurrentPosition[1] - small(imgBitmap).getHeight(), linePaint);
 
         }
     }
@@ -314,9 +311,9 @@ public class WhaleLineChart extends View {
             canvas.drawText(textList.get(i), i * rectWidth + (i + 1) * widthDistance + rectWidth / 2, 0, textPaint);
             if (i == 0) {
                 canvas.drawText(textValueList.get(i) + "", i * rectWidth + (i + 1) * widthDistance + rectWidth / 2, -(textSize + 2 * textDistance + rectHeightList.get(i)), textPaint);
+            } else {
+                canvas.drawText(textValueList.get(i) + "麦点", i * rectWidth + (i + 1) * widthDistance + rectWidth / 2, -(textSize + 2 * textDistance + rectHeightList.get(i)), textPaint);
             }
-            canvas.drawText(textValueList.get(i) + "麦点", i * rectWidth + (i + 1) * widthDistance + rectWidth / 2, -(textSize + 2 * textDistance + rectHeightList.get(i)), textPaint);
-
         }
     }
 
@@ -324,6 +321,40 @@ public class WhaleLineChart extends View {
     //利用贝塞尔曲线画曲线以及画小人
     private void drawChartLine(Canvas canvas) {
         canvas.drawPath(linePath, linePaint);
+    }
+
+    //先判断currentCount也就是当前的位置，再判断离count多远
+    private float getExactlyValueX() {
+        int currentCount = 0;
+        float currentdistance = 0;
+        float rate = 0;
+        float currentValue = textValueList.get(currentCount);
+        float nextValue = textValueList.get(currentCount + 1);
+        for (int i = 0; i < textValueList.size() - 1;) {
+            if (((currentValue <= totalPosition) && (totalPosition < nextValue))) {
+                rate = (totalPosition - currentValue) / (nextValue - currentValue);
+                currentCount = i;
+                currentdistance = rate * (widthDistance + rectWidth) + i*(rectWidth+widthDistance);
+                Log.e("i:", ""+i);
+                Log.e("currentdistance:", ""+currentdistance);
+                Log.e("totalPosition-current:", ""+(totalPosition - currentValue));
+                Log.e("nextValue-currentValue:", ""+(nextValue - currentValue));
+                break;
+            }
+            if(i==textValueList.size() - 2){
+                rate = (totalPosition - currentValue) / (nextValue - currentValue);
+                currentCount = i;
+                currentdistance = rate * widthDistance + i*(rectWidth+widthDistance);
+                Log.e("rate:", ""+rate);
+                Log.e("totalPosition-current:", ""+(totalPosition - currentValue));
+                Log.e("nextValue-currentValue:", ""+(nextValue - currentValue));
+                break;
+            }
+            i++;
+            currentValue = textValueList.get(i);
+            nextValue = textValueList.get(i + 1);
+        }
+        return currentdistance;
     }
 
     //动态绘制小人的属性动画
@@ -341,16 +372,16 @@ public class WhaleLineChart extends View {
                 //获取当前点坐标封装到mCurrentPosition中
                 float rate = (float) totalPosition / textValueList.get(textValueList.size() - 1);
                 //当还没有达到指定的位置时，让控件继续重绘。否则取消动画
-                if (value < rate * imgPathMeasure.getLength()) {
-                    imgPathMeasure.getPosTan(value, mCurrentPosition, mTanPositon);
-                    invalidate();
+                imgPathMeasure.getPosTan(value - 50, mCurrentPosition, mTanPositon);
+                if (mCurrentPosition[0] < widthDistance + rectWidth + getExactlyValueX()) {
+                    postInvalidate();
                 } else {
                     imgAnimator.cancel();
                 }
             }
         });
         //绘制动态矩形
-        rectAnimator = ValueAnimator.ofFloat(0, totalPosition + 500);
+        rectAnimator = ValueAnimator.ofFloat(0, textValueList.get(textValueList.size()-1) + 500);
         rectAnimator.setDuration(duration);
         rectAnimator.setInterpolator(new AccelerateInterpolator());
         rectAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -376,18 +407,13 @@ public class WhaleLineChart extends View {
                             currentDrawCount = currentCount + 1;
                             //用当前的比分率与当前长度相乘
                             currentDrawValue = rectHeightList.get(currentDrawCount) * (1 - (-(nextDistance) / (currentDistance - nextDistance)));
-                            Log.e("currentDrawValue：", "" + currentDrawValue);
                             break;
                         }
                         currentCount++;
                         currentDistance = rectFAnimatorValue - 500 - textValueList.get(currentCount);
                         nextDistance = rectFAnimatorValue - 500 - textValueList.get(currentCount + 1);
                     }
-                    Log.e("rectFAnimatorValue:", "" + rectFAnimatorValue);
-                    Log.e("currentDrawCount:", "" + currentDrawCount);
-                    Log.e("currentDrawValue:", "" + currentDrawValue);
-                    Log.e("------------------:", "--------------");
-                    invalidate();
+                    postInvalidate();
                 } else {
                     rectAnimator.cancel();
                 }
