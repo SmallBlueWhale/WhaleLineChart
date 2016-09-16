@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">WhaleLineChart</string>
+    <string name="text">卖座会员成长体系</string>
+    <string name="text1">查看等级特权</string>
 </resources>

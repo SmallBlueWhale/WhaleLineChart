@@ -11,33 +11,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         whaleLineChart = (WhaleLineChart) findViewById(R.id.whaleLineChart);
-        whaleLineChart.setScore(2000);
+        whaleLineChart.setScore(7000);
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (whaleLineChart.getRectFValueAnimator() != null && whaleLineChart.getLineValueAnimator() != null) {
-            whaleLineChart.getRectFValueAnimator().pause();
-            whaleLineChart.getLineValueAnimator().pause();
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (whaleLineChart.getRectFValueAnimator() != null && whaleLineChart.getLineValueAnimator() != null) {
-            whaleLineChart.getRectFValueAnimator().resume();
-            whaleLineChart.getLineValueAnimator().resume();
-        }
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        if (whaleLineChart.getRectFValueAnimator() != null && whaleLineChart.getLineValueAnimator() != null) {
-            whaleLineChart.getRectFValueAnimator().end();
-            whaleLineChart.getLineValueAnimator().end();
-        }
-    }
 }
