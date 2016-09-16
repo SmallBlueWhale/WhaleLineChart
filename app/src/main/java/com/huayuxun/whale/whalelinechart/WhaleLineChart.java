@@ -2,6 +2,7 @@ package com.huayuxun.whale.whalelinechart;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -23,6 +24,8 @@ import android.view.animation.LinearInterpolator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created by jinhui on 2016/8/31.
@@ -47,6 +50,14 @@ public class WhaleLineChart extends View {
     private float widthDistance;                //设置的横向间隔
     private float heightDistance;               //设置的纵向间隔
     private int currentRect = 0;                //当前矩形位置
+    private Timer timer;
+    private TimerTask task = new TimerTask(){
+        public void run(){
+            // 在此处添加执行的代码
+            Log.e("TimerTask","start"+ currentRect++);
+        }
+    };
+=
 
     //距离文本的间隔
     private float textDistance = 20;
@@ -129,6 +140,8 @@ public class WhaleLineChart extends View {
 
     public WhaleLineChart(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        timer = new Timer();
+        timer.schedule(task, 10);//开启定时器，delay 1s后执行task
         initPaint();
         initPath();
     }
@@ -263,9 +276,9 @@ public class WhaleLineChart extends View {
 
     //绘制背景，矩形，文字，以及曲线
     private void drawBackGround(Canvas canvas) {
-        drawChartRect(lineChartCanvas);
-        drawChartText(lineChartCanvas);
-        drawChartLine(lineChartCanvas);
+        drawChartRect(canvas);
+        drawChartText(canvas);
+        drawChartLine(canvas);
     }
 
     //开始矩形以及动画
@@ -331,7 +344,7 @@ public class WhaleLineChart extends View {
                     Log.e("mTanPositon0:", "" + mTanPositon[0]);
                     Log.e("mTanPositon1:", "" + mTanPositon[1]);
                     if (value == 0) {
-                        postInvalidateDelayed(1000);
+                        postInvalidateDelayed(10000);
                     } else {
                         invalidate();
                     }
@@ -340,15 +353,16 @@ public class WhaleLineChart extends View {
                 }
             }
         });
-        ValueAnimator rectAnimator = ValueAnimator.ofFloat(0, totalPosition);
-        rectAnimator.setInterpolator(new LinearInterpolator());
-        rectAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+        rectFValueAnimator = ValueAnimator.ofFloat(0, totalPosition);
+        rectFValueAnimator.setInterpolator(new LinearInterpolator());
+        rectFValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 rectFAnimatorValue = (float) animation.getAnimatedValue();
                 invalidate();
             }
         });
+        AnimatorSet animatorSet = new AnimatorSet();
         imgAnimator.start();
     }
 
@@ -381,7 +395,6 @@ public class WhaleLineChart extends View {
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
                 rectFAnimatorValue = 0;
-                Log.i("ValueAnimator.isRunning", "" + rectFValueAnimator.isRunning());
                 startRectFAnimation(++currentRect);
             }
         });
