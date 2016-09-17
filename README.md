@@ -2,9 +2,8 @@
 折线图，支持矩形块和图形移动
 
 # 效果图
-# ![image](https://github.com/SmallBlueWhale/WhaleRadarGraph/raw/master/image/Screenshot.png "效果图")
+# ![image](https://github.com/SmallBlueWhale/WhaleLineChart/raw/master/GIF.gif "效果图")
 
-# ![image](https://github.com/SmallBlueWhale/WhaleRadarGraph/raw/master/image/Screenshot2.png "效果图")
 # 用法
 ## 1. 添加依赖
 克隆本项目添加依赖或者在Gradle中添加依赖:
