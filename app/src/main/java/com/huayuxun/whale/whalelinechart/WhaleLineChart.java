@@ -78,6 +78,7 @@ public class WhaleLineChart extends View {
     private PathMeasure imgPathMeasure;
     private float[] mCurrentPosition = new float[2];
     private float[] mTanPositon = new float[2];
+    private boolean isBackGroundDrawFinished = false;
 
     {
         rectHeightList = new ArrayList<Float>() {
@@ -86,7 +87,6 @@ public class WhaleLineChart extends View {
                 add(100f);
                 add(150f);
                 add(200f);
-                add(320f);
                 add(420f);
             }
         };
@@ -97,7 +97,6 @@ public class WhaleLineChart extends View {
                 add("金牌替身");
                 add("荧幕新秀");
                 add("最佳主角");
-                add("最佳主角");
             }
         };
 
@@ -106,34 +105,34 @@ public class WhaleLineChart extends View {
                 add(0);
                 add(500);
                 add(2000);
-                add(7000);
                 add(10000);
                 add(15000);
             }
         };
         textSize = 35f;
         rectWidth = 50f;
-        widthDistance = (dm.widthPixels - textValueList.size() * 50) / (textValueList.size()+1);
+        widthDistance = (dm.widthPixels - textValueList.size() * 50) / (textValueList.size() + 1);
         heightDistance = 100f;
     }
 
     public void resumeValueAnimator() {
-        if(rectAnimator!=null)
-        rectAnimator.resume();
-        if(imgAnimator!=null)
-        imgAnimator.resume();
+        if (rectAnimator != null)
+            rectAnimator.resume();
+        if (imgAnimator != null)
+            imgAnimator.resume();
     }
 
     public void pauseValueAnimator() {
-        if(rectAnimator!=null)
+        if (rectAnimator != null)
             rectAnimator.pause();
-        if(imgAnimator!=null)
+        if (imgAnimator != null)
             imgAnimator.pause();
     }
+
     public void stopValueAnimator() {
-        if(rectAnimator!=null)
+        if (rectAnimator != null)
             rectAnimator.end();
-        if(imgAnimator!=null)
+        if (imgAnimator != null)
             imgAnimator.end();
     }
 
@@ -188,7 +187,8 @@ public class WhaleLineChart extends View {
 
         //初始化遮幕层矩形画笔
         veilRectPaint = new Paint();
-        veilRectPaint.setColor(Color.WHITE);
+        veilRectPaint.setColor(Color.YELLOW);
+        veilRectPaint.setAlpha(80);
         veilRectPaint.setStrokeCap(Paint.Cap.ROUND);
         veilRectPaint.setStrokeWidth(3);
         veilRectPaint.setAntiAlias(true);
@@ -272,23 +272,29 @@ public class WhaleLineChart extends View {
         //将画布的中心移到屏幕的中心
         canvas.save();
         canvas.translate(0, getHeight() - textDistance);
-        //背景绘制一次就可以了
-        drawBackGround(canvas);
+        lineChartCanvas.translate(0, getHeight() - textDistance);
+        //背景绘制一次就可以了,将背景绘制在另一个bitmap中
+        drawBackGround(lineChartCanvas);
+        canvas.drawBitmap(canvasBitmap, 0, -(getHeight() - textDistance), new Paint());
         drawAnimation(canvas);
         canvas.restore();
     }
 
     //绘制背景，矩形，文字，以及曲线
     private void drawBackGround(Canvas canvas) {
+        if (isBackGroundDrawFinished) {
+            return;
+        }
         drawChartRect(canvas);
         drawChartText(canvas);
         drawChartLine(canvas);
+        isBackGroundDrawFinished = true;
     }
-
     //开始矩形以及动画
     private void drawAnimation(Canvas canvas) {
         //保存上一次小人图的状态
         if (isStartAnimation) {
+            drawBackGroundRect(canvas);
             rectF = new RectF(currentDrawCount * rectWidth + (currentDrawCount + 1) * widthDistance, -currentDrawValue - textSize - textDistance, currentDrawCount * rectWidth + (currentDrawCount + 1) * widthDistance + rectWidth, -textSize - textDistance);
             canvas.drawRoundRect(rectF, 50, 50, veilRectPaint);
             canvas.drawBitmap(small(imgBitmap), mCurrentPosition[0] - rectWidth - 20, mCurrentPosition[1] - small(imgBitmap).getHeight(), linePaint);
@@ -297,7 +303,20 @@ public class WhaleLineChart extends View {
     }
 
 
-    //图表矩形绘制
+    private void drawBackGroundRect(Canvas canvas) {
+        if (currentDrawCount == 0) {
+            return;
+        }
+        Log.e("currentDrawCount:",""+currentDrawCount);
+        for (int i = 0; i < currentDrawCount; i++) {
+            rectF = new RectF(i * rectWidth + (i + 1) * widthDistance, -(rectHeightList.get(i)) - textSize - textDistance, i * rectWidth + (i + 1) * widthDistance + rectWidth, -textSize - textDistance);
+            //这里这么写是因为圆角矩形一开始是一条直线
+            canvas.drawRoundRect(rectF, 50, 50, veilRectPaint);
+        }
+    }
+
+
+    //背景图表矩形绘制
     private void drawChartRect(Canvas canvas) {
 
         //判空
@@ -312,7 +331,7 @@ public class WhaleLineChart extends View {
         }
     }
 
-    //图标文字绘制
+    //背景图标文字绘制
     private void drawChartText(Canvas canvas) {
         //判空
         if (textList == null || textList.size() == 0) {
@@ -330,7 +349,7 @@ public class WhaleLineChart extends View {
     }
 
 
-    //利用贝塞尔曲线画曲线以及画小人
+    //背景贝塞尔曲线
     private void drawChartLine(Canvas canvas) {
         canvas.drawPath(linePath, linePaint);
     }
@@ -342,24 +361,17 @@ public class WhaleLineChart extends View {
         float rate = 0;
         float currentValue = textValueList.get(currentCount);
         float nextValue = textValueList.get(currentCount + 1);
-        for (int i = 0; i < textValueList.size() - 1;) {
+        for (int i = 0; i < textValueList.size() - 1; ) {
             if (((currentValue <= totalPosition) && (totalPosition < nextValue))) {
                 rate = (totalPosition - currentValue) / (nextValue - currentValue);
                 currentCount = i;
-                currentdistance = rate * (widthDistance + rectWidth) + i*(rectWidth+widthDistance);
-                Log.e("i:", ""+i);
-                Log.e("currentdistance:", ""+currentdistance);
-                Log.e("totalPosition-current:", ""+(totalPosition - currentValue));
-                Log.e("nextValue-currentValue:", ""+(nextValue - currentValue));
+                currentdistance = rate * (widthDistance + rectWidth) + i * (rectWidth + widthDistance);
                 break;
             }
-            if(i==textValueList.size() - 2){
+            if (i == textValueList.size() - 2) {
                 rate = (totalPosition - currentValue) / (nextValue - currentValue);
                 currentCount = i;
-                currentdistance = rate * widthDistance + i*(rectWidth+widthDistance);
-                Log.e("rate:", ""+rate);
-                Log.e("totalPosition-current:", ""+(totalPosition - currentValue));
-                Log.e("nextValue-currentValue:", ""+(nextValue - currentValue));
+                currentdistance = rate * widthDistance + i * (rectWidth + widthDistance);
                 break;
             }
             i++;
@@ -392,8 +404,9 @@ public class WhaleLineChart extends View {
                 }
             }
         });
+
         //绘制动态矩形
-        rectAnimator = ValueAnimator.ofFloat(0, textValueList.get(textValueList.size()-1) + 500);
+        rectAnimator = ValueAnimator.ofFloat(0, textValueList.get(textValueList.size() - 1) + 500);
         rectAnimator.setDuration(duration);
         rectAnimator.setInterpolator(new AccelerateInterpolator());
         rectAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -422,6 +435,7 @@ public class WhaleLineChart extends View {
                             break;
                         }
                         currentCount++;
+
                         currentDistance = rectFAnimatorValue - 500 - textValueList.get(currentCount);
                         nextDistance = rectFAnimatorValue - 500 - textValueList.get(currentCount + 1);
                     }
