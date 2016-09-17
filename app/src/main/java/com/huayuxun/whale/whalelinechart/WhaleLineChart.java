@@ -307,12 +307,11 @@ public class WhaleLineChart extends View {
         if (currentDrawCount == 0) {
             return;
         }
-        Log.e("currentDrawCount:",""+currentDrawCount);
         for (int i = 0; i < currentDrawCount; i++) {
             rectF = new RectF(i * rectWidth + (i + 1) * widthDistance, -(rectHeightList.get(i)) - textSize - textDistance, i * rectWidth + (i + 1) * widthDistance + rectWidth, -textSize - textDistance);
-            //这里这么写是因为圆角矩形一开始是一条直线
             canvas.drawRoundRect(rectF, 50, 50, veilRectPaint);
         }
+        //
     }
 
 
@@ -362,6 +361,10 @@ public class WhaleLineChart extends View {
         float currentValue = textValueList.get(currentCount);
         float nextValue = textValueList.get(currentCount + 1);
         for (int i = 0; i < textValueList.size() - 1; ) {
+            if(totalPosition==textValueList.get(textValueList.size() - 1)){
+                currentdistance = textValueList.size() * (widthDistance + rectWidth);
+                break;
+            }
             if (((currentValue <= totalPosition) && (totalPosition < nextValue))) {
                 rate = (totalPosition - currentValue) / (nextValue - currentValue);
                 currentCount = i;
@@ -398,7 +401,7 @@ public class WhaleLineChart extends View {
                 //当还没有达到指定的位置时，让控件继续重绘。否则取消动画
                 imgPathMeasure.getPosTan(value - 50, mCurrentPosition, mTanPositon);
                 if (mCurrentPosition[0] < widthDistance + rectWidth + getExactlyValueX()) {
-                    invalidate();
+                    postInvalidate();
                 } else {
                     imgAnimator.cancel();
                 }
@@ -431,11 +434,10 @@ public class WhaleLineChart extends View {
                         if (nextDistance < 0) {
                             currentDrawCount = currentCount + 1;
                             //用当前的比分率与当前长度相乘
-                            currentDrawValue = rectHeightList.get(currentDrawCount) * (1 - (-(nextDistance) / (currentDistance - nextDistance)));
+                            currentDrawValue = rectHeightList.get(currentDrawCount) * ((rectFAnimatorValue - 500) / (textValueList.get(currentDrawCount)));
                             break;
                         }
                         currentCount++;
-
                         currentDistance = rectFAnimatorValue - 500 - textValueList.get(currentCount);
                         nextDistance = rectFAnimatorValue - 500 - textValueList.get(currentCount + 1);
                     }
