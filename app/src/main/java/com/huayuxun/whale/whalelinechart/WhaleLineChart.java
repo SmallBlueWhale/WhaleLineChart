@@ -43,7 +43,9 @@ public class WhaleLineChart extends View {
     private ValueAnimator imgAnimator;          //图片动画
 
     private Path linePath;                      //曲线的路径
-
+    private Path arrowPath;                     //箭头的路径
+    private float[] mTrangleTopPosition = new float[2];
+    private float[] mTrangleBottomPosition = new float[2];
     private RectF rectF;                        //矩形
     private float rectWidth;                    //矩形宽度
     private List<Float> rectHeightList;         //每一列矩形高度
@@ -61,6 +63,7 @@ public class WhaleLineChart extends View {
     private float pivotX;                       //屏幕的中心X
     private float pivotY;                       //屏幕的中心Y
     private Paint rectPaint;                    //用于绘制矩形的画笔
+    private Paint arrowPaint;                   //用于绘制箭头的画笔
     private Paint veilRectPaint;                //用于绘制遮幕矩形的画笔
     private Paint linePaint;                    //用于绘制折线的画笔
     private Paint textPaint;                    //用于绘制文字的画笔
@@ -105,7 +108,7 @@ public class WhaleLineChart extends View {
                 add(0);
                 add(500);
                 add(2000);
-                add(10000);
+                add(6000);
                 add(15000);
             }
         };
@@ -148,11 +151,12 @@ public class WhaleLineChart extends View {
     public WhaleLineChart(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initPaint();
-        initPath();
+        initBeziePath();
+        initArrowPath();
     }
 
-    //初始化贝塞尔曲线路径
-    private void initPath() {
+
+    private void initBeziePath() {
         //起点
         float firstPointX = widthDistance;
         float firstPointY = -(heightDistance + 2 * textDistance + rectHeightList.get(0));
@@ -166,15 +170,34 @@ public class WhaleLineChart extends View {
         linePath = new Path();
         linePath.moveTo(firstPointX, firstPointY);
         linePath.quadTo(controlPointX, controlPointY, lastPointX, lastPointY);
-        imgPathMeasure = new PathMeasure(linePath, false);
-        //计算最后一个点的坐标以及角度
-        float[] lastPathX = new float[2];
-        float[] lastPathTan = new float[2];
-        imgPathMeasure.getPosTan(imgPathMeasure.getLength(), lastPathX, lastPathTan);
-        //计算方位角
-        float degrees = (float) (Math.atan2(lastPathTan[1], lastPathTan[0]) * 180.0 / Math.PI);
     }
 
+    //根据最后一个点的坐标值绘制一个三角箭头
+    private void initArrowPath(){
+        imgPathMeasure = new PathMeasure(linePath, false);
+        //计算最后一个点的坐标以及角度
+        float[] lastPosition = new float[2];
+        float[] lastPathTan = new float[2];
+        imgPathMeasure.getPosTan(imgPathMeasure.getLength(), lastPosition, lastPathTan);
+        //计算方位角
+        float degrees = (float) (Math.atan2(lastPathTan[1], lastPathTan[0]) * 180.0 / Math.PI);
+        double x;
+        double y;
+        x = - Math.cos(Math.PI*-(degrees)/180)*32 + lastPosition[0];
+        y = Math.sin(Math.PI*-(degrees)/180)*32 + lastPosition[1];
+        mTrangleBottomPosition[0] =(float) (Math.cos(Math.PI*(90 + degrees)/180)*13 + x);
+        mTrangleBottomPosition[1] =(float) (Math.sin(Math.PI*(90 + degrees)/180)*13 + y);
+        mTrangleTopPosition[0]    =(float) (- Math.cos(Math.PI*(90 + degrees)/180)*13 + x);
+        mTrangleTopPosition[1]    =(float) (- Math.cos(Math.PI*(90 + degrees)/180)*13 + y);
+
+        Log.e("mTrangleTopPosition","x:"+mTrangleTopPosition[0]+"   y:"+mTrangleTopPosition[1]);
+        Log.e("mTrangleBottomPosition","x:"+mTrangleBottomPosition[0]+"   y:"+mTrangleBottomPosition[1]);
+        arrowPath = new Path();
+        arrowPath.moveTo(lastPosition[0], lastPosition[1]);
+        arrowPath.lineTo(mTrangleTopPosition[0], mTrangleTopPosition[1]);
+        arrowPath.lineTo(mTrangleBottomPosition[0], mTrangleBottomPosition[1]);
+        arrowPath.close();
+    }
     //初始化画笔
     private void initPaint() {
         //初始化矩形画笔
@@ -198,8 +221,14 @@ public class WhaleLineChart extends View {
         linePaint = new Paint();
         linePaint.setColor(Color.CYAN);
         linePaint.setStyle(Paint.Style.STROKE);
-        linePaint.setStrokeWidth(5);
+        linePaint.setStrokeWidth(3);
         linePaint.setAntiAlias(true);
+
+        //初始化箭头画笔
+        arrowPaint = new Paint();
+        arrowPaint.setColor(Color.CYAN);
+        arrowPaint.setStyle(Paint.Style.FILL);
+        arrowPaint.setAntiAlias(true);
 
         //初始化文本内容画笔
         textPaint = new Paint();
@@ -351,6 +380,7 @@ public class WhaleLineChart extends View {
     //背景贝塞尔曲线
     private void drawChartLine(Canvas canvas) {
         canvas.drawPath(linePath, linePaint);
+        canvas.drawPath(arrowPath, arrowPaint);
     }
 
     //先判断currentCount也就是当前的位置，再判断离count多远
@@ -473,4 +503,5 @@ public class WhaleLineChart extends View {
         }
         startAnimation(4000);
     }
+
 }
