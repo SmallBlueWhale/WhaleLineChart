@@ -185,15 +185,15 @@ public class WhaleLineChart extends View {
         double y;
         x = - Math.cos(Math.PI*-(degrees)/180)*32 + lastPosition[0];
         y = Math.sin(Math.PI*-(degrees)/180)*32 + lastPosition[1];
-        mTrangleBottomPosition[0] =(float) (Math.cos(Math.PI*(90 + degrees)/180)*13 + x);
-        mTrangleBottomPosition[1] =(float) (Math.sin(Math.PI*(90 + degrees)/180)*13 + y);
-        mTrangleTopPosition[0]    =(float) (- Math.cos(Math.PI*(90 + degrees)/180)*13 + x);
-        mTrangleTopPosition[1]    =(float) (- Math.cos(Math.PI*(90 + degrees)/180)*13 + y);
+        mTrangleBottomPosition[0] =(float) (Math.cos(Math.PI*(90 + degrees)/180)*10 + x);
+        mTrangleBottomPosition[1] =(float) (Math.sin(Math.PI*(90 + degrees)/180)*10 + y);
+        mTrangleTopPosition[0]    =(float) (- Math.cos(Math.PI*(90 + degrees)/180)*10 + x);
+        mTrangleTopPosition[1]    =(float) (- Math.cos(Math.PI*(90 + degrees)/180)*10 + y);
 
         Log.e("mTrangleTopPosition","x:"+mTrangleTopPosition[0]+"   y:"+mTrangleTopPosition[1]);
         Log.e("mTrangleBottomPosition","x:"+mTrangleBottomPosition[0]+"   y:"+mTrangleBottomPosition[1]);
         arrowPath = new Path();
-        arrowPath.moveTo(lastPosition[0], lastPosition[1]);
+        arrowPath.moveTo(lastPosition[0] + 3, lastPosition[1] - 3);
         arrowPath.lineTo(mTrangleTopPosition[0], mTrangleTopPosition[1]);
         arrowPath.lineTo(mTrangleBottomPosition[0], mTrangleBottomPosition[1]);
         arrowPath.close();
@@ -217,11 +217,12 @@ public class WhaleLineChart extends View {
         veilRectPaint.setAntiAlias(true);
         veilRectPaint.setStyle(Paint.Style.FILL);
 
+
         //初始化折线画笔
         linePaint = new Paint();
         linePaint.setColor(Color.CYAN);
         linePaint.setStyle(Paint.Style.STROKE);
-        linePaint.setStrokeWidth(3);
+        linePaint.setStrokeWidth(5);
         linePaint.setAntiAlias(true);
 
         //初始化箭头画笔
